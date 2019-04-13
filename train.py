@@ -10,28 +10,6 @@ import pickle
 
 
 class TrainModel(object):
-    # define training function step
-    @tf.function
-    def train_step(self, inp, tar):
-        tar_inp = tar[:, :-1]
-        tar_real = tar[:, 1:]
-
-        enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
-
-        with tf.GradientTape() as tape:
-            predictions, _ = self.transformer(
-                inp, tar_inp, True, enc_padding_mask, combined_mask, dec_padding_mask
-            )
-            loss = loss_function(tar_real, predictions)
-
-        gradients = tape.gradient(loss, self.transformer.trainable_variables)
-        self.optimizer.apply_gradients(
-            zip(gradients, self.transformer.trainable_variables)
-        )
-
-        self.train_loss(loss)
-        self.train_accuracy(tar_real, predictions)
-
     def train(
         self,
         MAX_LENGTH=40,
@@ -112,6 +90,35 @@ class TrainModel(object):
         with open(checkpoint_path + "/tokenizer_target.pickle", "wb") as handle:
             pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+        # define training function step
+        @tf.function
+        def train_step(inp, tar):
+            tar_inp = tar[:, :-1]
+            tar_real = tar[:, 1:]
+
+            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
+                inp, tar_inp
+            )
+
+            with tf.GradientTape() as tape:
+                predictions, _ = self.transformer(
+                    inp,
+                    tar_inp,
+                    True,
+                    enc_padding_mask,
+                    combined_mask,
+                    dec_padding_mask,
+                )
+                loss = loss_function(tar_real, predictions)
+
+            gradients = tape.gradient(loss, self.transformer.trainable_variables)
+            self.optimizer.apply_gradients(
+                zip(gradients, self.transformer.trainable_variables)
+            )
+
+            self.train_loss(loss)
+            self.train_accuracy(tar_real, predictions)
+
         # training loop
         for epoch in range(EPOCHS):
             start = time.time()
@@ -121,7 +128,7 @@ class TrainModel(object):
 
             # inp -> portuguese, tar -> english
             for (batch, (inp, tar)) in enumerate(train_dataset):
-                self.train_step(inp, tar)
+                train_step(inp, tar)
                 if batch % 500 == 0:
                     print(
                         "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}".format(
