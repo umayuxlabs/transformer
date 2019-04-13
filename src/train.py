@@ -1,7 +1,8 @@
 import tensorflow_datasets as tfds
 import tensorflow as tf
-import .dataset as dt
+
 from .optimizer import CustomSchedule, loss_function
+from .dataset import Dataset
 from .model import Transformer
 import time
 from .masking import create_masks
@@ -46,7 +47,7 @@ class TrainModel(object):
     ):
 
         # Build the dataset for training validation
-        dataset = dt.Dataset(filename=dataset_file)
+        dataset = Dataset(filename=dataset_file)
         dataset.build_train_test(test=test_partition)
         train_examples, val_examples = dataset.format_train_test()
         tokenizer_source, tokenizer_target = dataset.tokenizer(train_examples)
