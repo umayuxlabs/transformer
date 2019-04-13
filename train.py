@@ -50,17 +50,17 @@ class TrainModel(object):
 
         # Setup the learning rate and optimizer
         learning_rate = CustomSchedule(d_model)
-        self.optimizer = tf.keras.optimizers.Adam(
+        optimizer = tf.keras.optimizers.Adam(
             learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
         )
 
-        self.train_loss = tf.keras.metrics.Mean(name="train_loss")
-        self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+        train_loss = tf.keras.metrics.Mean(name="train_loss")
+        train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
             name="train_accuracy"
         )
 
         # setup Transformer
-        self.transformer = Transformer(
+        transformer = Transformer(
             num_layers,
             d_model,
             num_heads,
@@ -71,9 +71,7 @@ class TrainModel(object):
         )
 
         # setup checkpoints
-        ckpt = tf.train.Checkpoint(
-            transformer=self.transformer, optimizer=self.optimizer
-        )
+        ckpt = tf.train.Checkpoint(transformer=transformer, optimizer=optimizer)
         ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
 
         # if a checkpoint exists, restore the latest checkpoint.
@@ -101,7 +99,7 @@ class TrainModel(object):
             )
 
             with tf.GradientTape() as tape:
-                predictions, _ = self.transformer(
+                predictions, _ = transformer(
                     inp,
                     tar_inp,
                     True,
@@ -111,20 +109,18 @@ class TrainModel(object):
                 )
                 loss = loss_function(tar_real, predictions)
 
-            gradients = tape.gradient(loss, self.transformer.trainable_variables)
-            self.optimizer.apply_gradients(
-                zip(gradients, self.transformer.trainable_variables)
-            )
+            gradients = tape.gradient(loss, transformer.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
 
-            self.train_loss(loss)
-            self.train_accuracy(tar_real, predictions)
+            train_loss(loss)
+            train_accuracy(tar_real, predictions)
 
         # training loop
         for epoch in range(EPOCHS):
             start = time.time()
 
-            self.train_loss.reset_states()
-            self.train_accuracy.reset_states()
+            train_loss.reset_states()
+            train_accuracy.reset_states()
 
             # inp -> portuguese, tar -> english
             for (batch, (inp, tar)) in enumerate(train_dataset):
@@ -134,8 +130,8 @@ class TrainModel(object):
                         "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}".format(
                             epoch + 1,
                             batch,
-                            self.train_loss.result(),
-                            self.train_accuracy.result(),
+                            train_loss.result(),
+                            train_accuracy.result(),
                         )
                     )
 
@@ -149,7 +145,7 @@ class TrainModel(object):
 
             print(
                 "Epoch {} Loss {:.4f} Accuracy {:.4f}".format(
-                    epoch + 1, self.train_loss.result(), self.train_accuracy.result()
+                    epoch + 1, train_loss.result(), train_accuracy.result()
                 )
             )
 
