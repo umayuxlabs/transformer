@@ -9,28 +9,29 @@ from src.masking import create_masks
 import pickle
 
 
-# define training function step
-@tf.function
-def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
-    tar_inp = tar[:, :-1]
-    tar_real = tar[:, 1:]
-
-    enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
-
-    with tf.GradientTape() as tape:
-        predictions, _ = transformer(
-            inp, tar_inp, True, enc_padding_mask, combined_mask, dec_padding_mask
-        )
-        loss = loss_function(tar_real, predictions)
-
-    gradients = tape.gradient(loss, transformer.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
-
-    train_loss(loss)
-    train_accuracy(tar_real, predictions)
-
-
 class TrainModel(object):
+    # define training function step
+    @tf.function
+    def train_step(self, inp, tar):
+        tar_inp = tar[:, :-1]
+        tar_real = tar[:, 1:]
+
+        enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
+
+        with tf.GradientTape() as tape:
+            predictions, _ = self.transformer(
+                inp, tar_inp, True, enc_padding_mask, combined_mask, dec_padding_mask
+            )
+            loss = loss_function(tar_real, predictions)
+
+        gradients = tape.gradient(loss, self.transformer.trainable_variables)
+        self.optimizer.apply_gradients(
+            zip(gradients, self.transformer.trainable_variables)
+        )
+
+        self.train_loss(loss)
+        self.train_accuracy(tar_real, predictions)
+
     def train(
         self,
         MAX_LENGTH=40,
@@ -71,17 +72,17 @@ class TrainModel(object):
 
         # Setup the learning rate and optimizer
         learning_rate = CustomSchedule(d_model)
-        optimizer = tf.keras.optimizers.Adam(
+        self.optimizer = tf.keras.optimizers.Adam(
             learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
         )
 
-        train_loss = tf.keras.metrics.Mean(name="train_loss")
-        train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+        self.train_loss = tf.keras.metrics.Mean(name="train_loss")
+        self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
             name="train_accuracy"
         )
 
         # setup Transformer
-        transformer = Transformer(
+        self.transformer = Transformer(
             num_layers,
             d_model,
             num_heads,
@@ -92,7 +93,9 @@ class TrainModel(object):
         )
 
         # setup checkpoints
-        ckpt = tf.train.Checkpoint(transformer=transformer, optimizer=optimizer)
+        ckpt = tf.train.Checkpoint(
+            transformer=self.transformer, optimizer=self.optimizer
+        )
         ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
 
         # if a checkpoint exists, restore the latest checkpoint.
@@ -118,14 +121,14 @@ class TrainModel(object):
 
             # inp -> portuguese, tar -> english
             for (batch, (inp, tar)) in enumerate(train_dataset):
-                train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy)
+                self.train_step(inp, tar)
                 if batch % 500 == 0:
                     print(
                         "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}".format(
                             epoch + 1,
                             batch,
-                            train_loss.result(),
-                            train_accuracy.result(),
+                            self.train_loss.result(),
+                            self.train_accuracy.result(),
                         )
                     )
 
@@ -139,7 +142,7 @@ class TrainModel(object):
 
             print(
                 "Epoch {} Loss {:.4f} Accuracy {:.4f}".format(
-                    epoch + 1, train_loss.result(), train_accuracy.result()
+                    epoch + 1, self.train_loss.result(), self.train_accuracy.result()
                 )
             )
 
