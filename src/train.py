@@ -1,6 +1,6 @@
 import tensorflow_datasets as tfds
 import tensorflow as tf
-import dataset as dt
+import .dataset as dt
 from .optimizer import CustomSchedule, loss_function
 from .model import Transformer
 import time
