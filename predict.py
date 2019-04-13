@@ -45,7 +45,7 @@ class PredictModel(object):
         with open(self.checkpoint_path + "/tokenizer_source.pickle", "rb") as handle:
             self.tokenizer_source = pickle.load(handle)
 
-        with open(self.checkpoint_path + "/tokenizer_source.pickle", "rb") as handle:
+        with open(self.checkpoint_path + "/tokenizer_target.pickle", "rb") as handle:
             self.tokenizer_target = pickle.load(handle)
 
         self.learning_rate = CustomSchedule(self.d_model)
