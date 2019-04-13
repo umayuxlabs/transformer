@@ -16,7 +16,7 @@ dff = 512
 num_heads = 8
 dropout_rate = 0.1
 test_partition = 0.2
-dataset_file = "./data/test.tsv"
+dataset_file = "./data/bancobot.tsv"
 checkpoint_path = "./data/checkpoints/train"
 
 
