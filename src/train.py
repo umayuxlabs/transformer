@@ -1,12 +1,32 @@
 import tensorflow_datasets as tfds
 import tensorflow as tf
-import src.dataset as dt
-from src.optimizer import CustomSchedule, loss_function
-from src.model import Transformer
+import dataset as dt
+from .optimizer import CustomSchedule, loss_function
+from .model import Transformer
 import time
-from src.masking import create_masks
+from .masking import create_masks
 import pickle
-import fire
+
+# define training function step
+@tf.function
+def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
+    tar_inp = tar[:, :-1]
+    tar_real = tar[:, 1:]
+
+    enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
+
+    with tf.GradientTape() as tape:
+        predictions, _ = transformer(
+            inp, tar_inp, True, enc_padding_mask, combined_mask, dec_padding_mask
+        )
+        loss = loss_function(tar_real, predictions)
+
+    gradients = tape.gradient(loss, transformer.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
+
+    train_loss(loss)
+    train_accuracy(tar_real, predictions)
+
 
 class TrainModel(object):
     def train(
@@ -22,7 +42,7 @@ class TrainModel(object):
         dropout_rate=0.1,
         test_partition=0.2,
         dataset_file="./data/bancobot.tsv",
-        checkpoint_path="./data/checkpoints/train",
+        checkpoint_path="./data/checkpoints/train/",
     ):
 
         # Build the dataset for training validation
@@ -80,33 +100,6 @@ class TrainModel(object):
         else:
             print("Initializing from scratch.")
 
-        # define training function step
-        @tf.function
-        def train_step(inp, tar):
-            tar_inp = tar[:, :-1]
-            tar_real = tar[:, 1:]
-
-            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
-                inp, tar_inp
-            )
-
-            with tf.GradientTape() as tape:
-                predictions, _ = transformer(
-                    inp,
-                    tar_inp,
-                    True,
-                    enc_padding_mask,
-                    combined_mask,
-                    dec_padding_mask,
-                )
-                loss = loss_function(tar_real, predictions)
-
-            gradients = tape.gradient(loss, transformer.trainable_variables)
-            optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
-
-            train_loss(loss)
-            train_accuracy(tar_real, predictions)
-
         # training loop
         for epoch in range(EPOCHS):
             start = time.time()
@@ -116,7 +109,7 @@ class TrainModel(object):
 
             # inp -> portuguese, tar -> english
             for (batch, (inp, tar)) in enumerate(train_dataset):
-                train_step(inp, tar)
+                train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy)
                 if batch % 500 == 0:
                     print(
                         "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}".format(
@@ -144,8 +137,8 @@ class TrainModel(object):
             print("Time taken for 1 epoch: {} secs\n".format(time.time() - start))
 
         # saving tokenizers
-        with open("./data/tokenizer_source.pickle", "wb") as handle:
+        with open(checkpoint_path + "/tokenizer_source.pickle", "wb") as handle:
             pickle.dump(tokenizer_source, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        with open("./data/tokenizer_target.pickle", "wb") as handle:
+        with open(checkpoint_path + "/tokenizer_target.pickle", "wb") as handle:
             pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
