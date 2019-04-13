@@ -103,11 +103,11 @@ class TrainModel(object):
             print("Initializing from scratch.")
 
         # saving tokenizers
-        with open(checkpoint_path + "/tokenizer_source.pickle", "wb") as handle:
-            pickle.dump(tokenizer_source, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        # with open(checkpoint_path + "/tokenizer_source.pickle", "wb") as handle:
+        #     pickle.dump(tokenizer_source, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        with open(checkpoint_path + "/tokenizer_target.pickle", "wb") as handle:
-            pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        # with open(checkpoint_path + "/tokenizer_target.pickle", "wb") as handle:
+        #     pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         # training loop
         for epoch in range(EPOCHS):
