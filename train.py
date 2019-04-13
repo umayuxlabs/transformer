@@ -1,11 +1,11 @@
 import tensorflow_datasets as tfds
 import tensorflow as tf
 
-from .optimizer import CustomSchedule, loss_function
-from .dataset import Dataset
-from .model import Transformer
+from src.optimizer import CustomSchedule, loss_function
+from src.dataset import Dataset
+from src.model import Transformer
 import time
-from .masking import create_masks
+from src.masking import create_masks
 import pickle
 
 
