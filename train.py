@@ -120,3 +120,11 @@ for epoch in range(EPOCHS):
     )
 
     print("Time taken for 1 epoch: {} secs\n".format(time.time() - start))
+
+
+# saving tokenizers
+with open("./data/tokenizer_source.pickle", "wb") as handle:
+    pickle.dump(tokenizer_source, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+with open("./data/tokenizer_target.pickle", "wb") as handle:
+    pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
