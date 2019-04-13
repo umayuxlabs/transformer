@@ -8,6 +8,7 @@ import time
 from .masking import create_masks
 import pickle
 
+
 # define training function step
 @tf.function
 def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
