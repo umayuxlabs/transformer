@@ -5,11 +5,12 @@ from src.optimizer import CustomSchedule, loss_function
 from src.model import Transformer
 import time
 from src.masking import create_masks
+import pickle
 
 MAX_LENGTH = 40
 BUFFER_SIZE = 20000
 BATCH_SIZE = 64
-EPOCHS = 2
+EPOCHS = 20
 num_layers = 4
 d_model = 128
 dff = 512
@@ -68,6 +69,8 @@ ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
 if ckpt_manager.latest_checkpoint:
     ckpt.restore(ckpt_manager.latest_checkpoint)
     print("Latest checkpoint restored!!")
+else:
+    print("Initializing from scratch.")
 
 
 @tf.function
@@ -88,33 +91,3 @@ def train_step(inp, tar):
 
     train_loss(loss)
     train_accuracy(tar_real, predictions)
-
-
-for epoch in range(EPOCHS):
-    start = time.time()
-
-    train_loss.reset_states()
-    train_accuracy.reset_states()
-
-    # inp -> portuguese, tar -> english
-    for (batch, (inp, tar)) in enumerate(train_dataset):
-        train_step(inp, tar)
-        if batch % 500 == 0:
-            print(
-                "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}".format(
-                    epoch + 1, batch, train_loss.result(), train_accuracy.result()
-                )
-            )
-
-    if (epoch + 1) % 5 == 0:
-        ckpt_save_path = ckpt_manager.save()
-        print("Saving checkpoint for epoch {} at {}".format(epoch + 1, ckpt_save_path))
-
-    print(
-        "Epoch {} Loss {:.4f} Accuracy {:.4f}".format(
-            epoch + 1, train_loss.result(), train_accuracy.result()
-        )
-    )
-
-    print("Time taken for 1 epoch: {} secs\n".format(time.time() - start))
-
