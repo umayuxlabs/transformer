@@ -9,7 +9,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-class TrainModel(object):
+class PredictModel(object):
     def __init__(
         self,
         MAX_LENGTH=40,
@@ -179,3 +179,4 @@ class TrainModel(object):
 
         if plot:
             self.plot_attention_weights(attention_weights, sentence, result, plot)
+
