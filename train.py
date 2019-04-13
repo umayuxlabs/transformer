@@ -53,13 +53,6 @@ class TrainModel(object):
         train_examples, val_examples = dataset.format_train_test()
         tokenizer_source, tokenizer_target = dataset.tokenizer(train_examples)
 
-        # saving tokenizers
-        with open(checkpoint_path + "/tokenizer_source.pickle", "wb") as handle:
-            pickle.dump(tokenizer_source, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        with open(checkpoint_path + "/tokenizer_target.pickle", "wb") as handle:
-            pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
         train_dataset = train_examples.map(dataset.tf_encode)
         train_dataset = train_dataset.filter(dataset.filter_max_length)
         train_dataset = train_dataset.cache()
@@ -108,6 +101,13 @@ class TrainModel(object):
             print("Latest checkpoint restored!!")
         else:
             print("Initializing from scratch.")
+
+        # saving tokenizers
+        with open(checkpoint_path + "/tokenizer_source.pickle", "wb") as handle:
+            pickle.dump(tokenizer_source, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        with open(checkpoint_path + "/tokenizer_target.pickle", "wb") as handle:
+            pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         # training loop
         for epoch in range(EPOCHS):
