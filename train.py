@@ -21,12 +21,29 @@ dropout_rate = 0.1
 test_partition = 0.2
 dataset_file = "./data/banco/bancobot.tsv"
 checkpoint_path = "./data/banco/"
+retrain = True
 
 # Build the dataset for training validation
 dataset = Dataset(filename=dataset_file)
 dataset.build_train_test(test=test_partition)
 train_examples, val_examples = dataset.format_train_test()
-tokenizer_source, tokenizer_target = dataset.tokenizer(train_examples)
+
+if retrain:
+
+    # loading tokenizers for future predictions
+    with open(checkpoint_path + "/tokenizer_source.pickle", "rb") as handle:
+        tokenizer_source = pickle.load(handle)
+
+    with open(checkpoint_path + "/tokenizer_target.pickle", "rb") as handle:
+        tokenizer_target = pickle.load(handle)
+
+    # update dataset class with previous data
+    dataset.tokenizer_source = tokenizer_source
+    dataset.tokenizer_target = tokenizer_target
+
+else:
+    tokenizer_source, tokenizer_target = dataset.tokenizer(train_examples)
+
 
 train_dataset = train_examples.map(dataset.tf_encode)
 train_dataset = train_dataset.filter(dataset.filter_max_length)
@@ -53,7 +70,7 @@ optimizer = tf.keras.optimizers.Adam(
 train_loss = tf.keras.metrics.Mean(name="train_loss")
 train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="train_accuracy")
 
-# setup Transformer
+# setup Transformer Model
 transformer = Transformer(
     num_layers,
     d_model,
