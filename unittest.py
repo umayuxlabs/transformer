@@ -75,28 +75,79 @@ logger.info(sample_ffn(tf.random.uniform((64, 50, 512))).shape)
 logger.info("END\n\n\n\n")
 
 
-logger.info("Test Transformer")
-sample_transformer = Transformer(
-    num_layers=2,
-    d_model=64,
-    num_heads=1,
-    dff=2048,
-    input_vocab_size=8500,
-    target_vocab_size=8000,
-)
-temp_input = tf.random.uniform((1, 62))
-temp_target = tf.random.uniform((1, 26))
-fn_out, fn_att = sample_transformer(
-    temp_input,
-    temp_target,
-    training=False,
-    enc_padding_mask=None,
-    look_ahead_mask=None,
-    dec_padding_mask=None,
+# logger.info("Test Transformer")
+# sample_transformer = Transformer(
+#     num_layers=2,
+#     d_model=64,
+#     num_heads=1,
+#     dff=2048,
+#     input_vocab_size=8500,
+#     target_vocab_size=8000,
+# )
+# temp_input = tf.random.uniform((1, 62))
+# temp_target = tf.random.uniform((1, 26))
+# fn_out, fn_att = sample_transformer(
+#     temp_input,
+#     temp_target,
+#     training=False,
+#     enc_padding_mask=None,
+#     look_ahead_mask=None,
+#     dec_padding_mask=None,
+# )
+
+# logger.info(
+#     "output weights: {}, attention_weights: {}".format(fn_out.shape)
+# )  # (batch_size, tar_seq_len, target_vocab_size)
+# logger.info("END\n\n\n\n")
+
+
+import src.dataset as dt
+
+logger.info("Dataset Testing")
+BUFFER_SIZE = 20000
+BATCH_SIZE = 32
+
+dataset = dt.Dataset(filename="./data/test.tsv")
+dataset.build_train_test(test=0.2)
+train_examples, test_examples = dataset.format_train_test()
+tokenizer_source, tokenizer_target = dataset.tokenizer(train_examples)
+
+train_dataset = train_examples.map(dataset.tf_encode)
+
+test_dataset = test_examples.map(dataset.tf_encode)
+
+
+logger.info("######## Source")
+
+sample_string = dt.preprocess_sentence(
+    [i.numpy().decode("UTF-8").split("\t")[0].encode() for i in train_examples][0]
 )
 
-logger.info(
-    "output weights: {}, attention_weights: {}".format(fn_out.shape)
-)  # (batch_size, tar_seq_len, target_vocab_size)
+tokenized_string = tokenizer_source.encode(sample_string)
+logger.info("Tokenized string is {}".format(tokenized_string))
+
+original_string = tokenizer_source.decode(tokenized_string)
+logger.info("The original string: {}".format(original_string))
+
+for ts in tokenized_string:
+    logger.info("{} ----> {}".format(ts, tokenizer_source.decode([ts])))
+
+logger.info([i for i in train_dataset][0])
+
+logger.info("######## Target")
+sample_string = dt.preprocess_sentence(
+    [i.numpy().decode("UTF-8").split("\t")[1].encode() for i in train_examples][0]
+)
+
+tokenized_string = tokenizer_target.encode(sample_string)
+logger.info("Tokenized string is {}".format(tokenized_string))
+
+original_string = tokenizer_target.decode(tokenized_string)
+logger.info("The original string: {}".format(original_string))
+
+for ts in tokenized_string:
+    logger.info("{} ----> {}".format(ts, tokenizer_target.decode([ts])))
+
+logger.info([i for i in train_dataset][0][1])
+
 logger.info("END\n\n\n\n")
-
