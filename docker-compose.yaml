@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  transformer:
+    restart: always
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./:/src/
+    ports:
+      - 65431:5000
+    command: python3 /src/app/api.py
+    labels:
+      - "traefik.docker.network=web"
+      - "traefik.enable=true"
+      - "traefik.basic.frontend.rule=Host:www.umayuxlabs.com;PathPrefixStrip:/api/v1/chatbot/assistant/"
+      - "traefik.basic.port=5000"
+      - "traefik.basic.protocol=http"
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
