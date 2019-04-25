@@ -5,6 +5,7 @@ import sys
 import os
 
 sys.path.append(os.path.abspath("/src/"))
+from utensor.predict import Model
 
 app = Flask(__name__)
 CORS(app)
@@ -15,6 +16,11 @@ logging.basicConfig(
     format="%(levelname)s %(asctime)s - %(message)s",
 )
 log = logging.getLogger()
+
+log.info("loading model ...")
+model = Model()
+model.load(checkpoint_path="/src/data/")
+log.info("model loaded")
 
 
 @app.route("/", methods=["GET"])
@@ -31,6 +37,11 @@ def home():
             RETURN: {message: "...", status: 1}
         </p>
     """
+
+
+@app.route("/predict/<query>", methods=["GET"])
+def predict(query):
+    return jsonify({"prediction": model.query(query)})
 
 
 if __name__ == "__main__":

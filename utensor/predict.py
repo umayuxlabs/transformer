@@ -21,7 +21,7 @@ class Model:
         d_model=64,
         dff=264,
         dropout_rate=0.1,
-        checkpoint_path="./data/",
+        checkpoint_path="/src/data/",
         beta_1=0.9,
         beta_2=0.98,
         epsilon=1e-9,
@@ -160,9 +160,6 @@ class Model:
         predicted_sentence = self.tokenizer_target.decode(
             [i for i in result if i < self.tokenizer_target.vocab_size]
         )
-
-        print("Pregunta: {}".format(sentence))
-        print("Respuesta UmyBot: {}".format(predicted_sentence))
 
         if plot:
             self.plot_attention_weights(attention_weights, sentence, result, plot)
