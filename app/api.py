@@ -4,6 +4,15 @@ from flask_cors import CORS
 import sys
 import os
 
+sys.path.append(os.path.abspath("/src/"))
+
+logging.basicConfig(
+    filename="/src/app/api.log",
+    level=logging.DEBUG,
+    format="%(levelname)s %(asctime)s - %(message)s",
+)
+log = logging.getLogger()
+
 import tensorflow_datasets as tfds
 import tensorflow as tf
 import utensor.dataset as dt
@@ -14,20 +23,10 @@ from utensor.masking import create_masks
 import pickle
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.abspath("/src/"))
-from utensor.predict import Model
-
 app = Flask(__name__)
 CORS(app)
 
-logging.basicConfig(
-    filename="/src/app/api.log",
-    level=logging.INFO,
-    format="%(levelname)s %(asctime)s - %(message)s",
-)
-log = logging.getLogger()
-
-checkpoint_path = "./data/banco/"
+checkpoint_path = "/src/data/banco/"
 d_model = 128
 MAX_LENGTH = 60
 BUFFER_SIZE = 20000
@@ -131,8 +130,10 @@ def translate(sentence):
         [i for i in result if i < tokenizer_target.vocab_size]
     )
 
-    print("Pregunta: {}".format(sentence))
-    print("Respuesta UmyBot: {}".format(predicted_sentence))
+    log.debug("Pregunta: {}".format(sentence))
+    log.debug("Respuesta UmyBot: {}".format(predicted_sentence))
+
+    return predicted_sentence
 
 
 log.info("loading model ...")
@@ -150,15 +151,21 @@ def home():
         <p>Depending on the model you will receive a different output. This is a generic API</p>
         <h3>USAGE</h3>
         <p>
-            GET: /predict/<sentence> <br>
-            RETURN: {message: "...", status: 1}
+            POST: /predict/ <br>
+                QUERY: {sentence: "..."} <br>
+            RETURN: {response: "...", status: 1} <br><br>
+        
+        <strong>EXAMPLE</strong> <br>
+        curl -X POST http://localhost:65431/predict/ -d'{"sentence": "hola, buenos dias"}' -H "Content-Type: application/json"
         </p>
     """
 
 
-@app.route("/predict/<query>", methods=["GET"])
-def predict(query):
-    return jsonify({"prediction": translate(query)})
+@app.route("/predict/", methods=["POST"])
+def predict():
+    data = request.get_json()
+    log.debug(data)
+    return jsonify({"response": translate(data["sentence"])})
 
 
 if __name__ == "__main__":
