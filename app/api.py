@@ -157,6 +157,8 @@ def home():
         
         <strong>EXAMPLE</strong> <br>
         curl -X POST http://localhost:65431/predict/ -d'{"sentence": "hola, buenos dias"}' -H "Content-Type: application/json"
+        <br><br>
+        gustavo1$ curl -X POST https://www.umayuxlabs.com/api/v1/chatbot/assistant/predict/ -d'{"sentence": "hola, buenos dias"}' -H "Content-Type: application/json"
         </p>
     """
 
