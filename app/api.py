@@ -138,7 +138,7 @@ def translate(sentence):
 
 def rep_h(word):
     if "@" in word:
-        return "[USER]"
+        return "[USUARIO]"
     else:
         return word
 
