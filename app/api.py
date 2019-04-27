@@ -136,6 +136,15 @@ def translate(sentence):
     return predicted_sentence
 
 
+def rep_h(word):
+    if "@" in word:
+        return "[USER]"
+
+
+def replace_identity(sentence):
+    return " ".join([rep_h(i) for i in sentence.split()])
+
+
 log.info("loading model ...")
 transformer, tokenizer_source, tokenizer_target = restore()
 log.info("model loaded")
@@ -167,7 +176,8 @@ def home():
 def predict():
     data = request.get_json()
     log.debug(data)
-    return jsonify({"response": translate(data["sentence"])})
+    response = translate(data["sentence"])
+    return jsonify({"response": replace_identity(response)})
 
 
 if __name__ == "__main__":
