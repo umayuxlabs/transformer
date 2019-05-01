@@ -4,6 +4,8 @@ import numpy as np
 import unicodedata
 import re
 import random
+import argparse
+import pickle
 
 # Converts the unicode file to ascii
 def unicode_to_ascii(s):
@@ -135,3 +137,51 @@ class Dataset:
             tf.size(x) <= self.max_length, tf.size(y) <= self.max_length
         )
 
+
+def load_dataset(params={}):
+
+    # setup parameters
+    MAX_LENGTH = params["MAX_LENGTH"]
+    BUFFER_SIZE = params["BUFFER_SIZE"]
+    BATCH_SIZE = params["BATCH_SIZE"]
+    vocab_dim = params["vocab_dim"]
+    test_partition = params["test_partition"]
+    dataset_file = params["dataset_file"]
+    checkpoint_path = params["checkpoint_path"]
+    retrain = params["retrain"]
+
+    # Build the dataset for training validation
+    dataset = Dataset(filename=dataset_file, vocab_dim=vocab_dim, max_length=MAX_LENGTH)
+    dataset.build_train_test(test=test_partition)
+    train_examples, val_examples = dataset.format_train_test()
+
+    if retrain:
+
+        # loading tokenizers for future predictions
+        with open(checkpoint_path + "/tokenizer_source.pickle", "rb") as handle:
+            tokenizer_source = pickle.load(handle)
+
+        with open(checkpoint_path + "/tokenizer_target.pickle", "rb") as handle:
+            tokenizer_target = pickle.load(handle)
+
+        # update dataset class with previous data
+        dataset.tokenizer_source = tokenizer_source
+        dataset.tokenizer_target = tokenizer_target
+
+    else:
+        tokenizer_source, tokenizer_target = dataset.tokenizer(train_examples)
+
+    train_dataset = train_examples.map(dataset.tf_encode)
+    train_dataset = train_dataset.filter(dataset.filter_max_length)
+    train_dataset = train_dataset.cache()
+    train_dataset = train_dataset.shuffle(BUFFER_SIZE).padded_batch(
+        BATCH_SIZE, padded_shapes=([-1], [-1])
+    )
+    train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+    val_dataset = val_examples.map(dataset.tf_encode)
+    val_dataset = val_dataset.filter(dataset.filter_max_length).padded_batch(
+        BATCH_SIZE, padded_shapes=([-1], [-1])
+    )
+
+    return train_examples, val_examples, tokenizer_source, tokenizer_target
