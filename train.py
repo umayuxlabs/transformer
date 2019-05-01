@@ -156,7 +156,7 @@ def train(args):
         )
 
         print(
-            "Epoch {} Test Loss {:.4f} Accuracy".format(
+            "Epoch {} Test Loss {:.4f} Accuracy {:.4f}".format(
                 epoch + 1, test_loss.result(), test_accuracy.result()
             )
         )
