@@ -11,6 +11,7 @@ import pickle
 from sklearn.metrics import classification_report
 import time
 import os
+import json
 
 tf.keras.backend.clear_session()
 
@@ -28,6 +29,8 @@ def test_acc(batch=32, test_dataset=[], transformer=[], test_accuracy=[], test_l
 
         test_accuracy(tar_real, predictions)
         test_loss(loss_function(tar_real, predictions))
+
+    return test_accuracy, test_loss
 
 
 def train(args):
@@ -49,6 +52,10 @@ def train(args):
         retrain=args.retrain,
     )
 
+    # save parameters
+    json.dump(params, open(params["checkpoint_path"] + "/params.json", "w"))
+
+    # load the dataset
     train_dataset, val_dataset, tokenizer_source, tokenizer_target = load_dataset(
         params=params
     )
@@ -62,6 +69,7 @@ def train(args):
         learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
     )
 
+    # setup loss
     train_loss = tf.keras.metrics.Mean(name="train_loss")
     train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="train_accuracy")
 
@@ -138,7 +146,8 @@ def train(args):
 
         # Perform accuracy over the test dataset
         test_accuracy.reset_states()
-        test_acc(
+        test_loss.reset_states()
+        test_accuracy, test_loss = test_acc(
             batch=32,
             test_dataset=val_dataset,
             transformer=transformer,
