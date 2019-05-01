@@ -184,4 +184,4 @@ def load_dataset(params={}):
         BATCH_SIZE, padded_shapes=([-1], [-1])
     )
 
-    return train_examples, val_examples, tokenizer_source, tokenizer_target
+    return train_dataset, val_dataset, tokenizer_source, tokenizer_target
