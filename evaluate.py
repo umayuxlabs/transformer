@@ -113,7 +113,6 @@ def translate(sentence, args):
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--parameters", type=str, required=True)
     parser.add_argument("--input_file", type=str, required=True)
     parser.add_argument("--checkpoint_path", type=str, required=True)
 
