@@ -186,7 +186,7 @@ def get_parser():
     parser.add_argument("--test_partition", default=0.2, type=float)
     parser.add_argument("--dataset_file", type=str, required=True)
     parser.add_argument("--checkpoint_path", type=str, required=True)
-    parser.add_argument("--retrain", default=False, type=bool)
+    parser.add_argument("--retrain", default=False, action="store_true")
 
     return parser
 
