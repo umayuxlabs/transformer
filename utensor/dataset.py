@@ -184,4 +184,11 @@ def load_dataset(params={}):
         BATCH_SIZE, padded_shapes=([-1], [-1])
     )
 
+    # saving tokenizers
+    with open(checkpoint_path + "/tokenizer_source.pickle", "wb") as handle:
+        pickle.dump(tokenizer_source, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    with open(checkpoint_path + "/tokenizer_target.pickle", "wb") as handle:
+        pickle.dump(tokenizer_target, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
     return train_dataset, val_dataset, tokenizer_source, tokenizer_target
